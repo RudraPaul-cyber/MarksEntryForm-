@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Marks Entry Portal - KRSU Admin</title>
+
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase App & Database (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            --glass-bg: rgba(255, 255, 255, 0.92);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --card-radius: 20px;
+            --input-radius: 12px;
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 25px rgba(79, 70, 229, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 15px;
+            color: var(--text-main);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Glowing Orbs Background */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: -1;
+            opacity: 0.5;
+            animation: float 10s infinite alternate ease-in-out;
+        }
+
+        body::before {
+            background: #6366f1;
+            top: 5%;
+            left: 10%;
+        }
+
+        body::after {
+            background: #0284c7;
+            bottom: 5%;
+            right: 10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-30px) scale(1.1); }
+        }
+
+        /* Login Container Styling */
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 40px 30px;
+            position: relative;
+            z-index: 2;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header .icon-box {
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #ffffff;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: var(--shadow-glow);
+            margin: 0 auto 15px;
+        }
+
+        .login-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .login-header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .login-form label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i.input-icon {
+            position: absolute;
+            left: 16px;
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 16px 14px 45px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--input-radius);
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .input-wrapper input:focus {
+            background-color: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        }
+
+        .toggle-pwd {
+            position: absolute;
+            right: 16px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: var(--input-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: var(--shadow-glow);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
+        }
+
+        /* App Container (Hidden by default) */
+        .app-container {
+            width: 100%;
+            max-width: 950px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Top Header Area */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title .icon-box {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #ffffff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            background: #f0fdf4;
+            color: var(--success);
+            border: 1px solid #bbf7d0;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge .pulse {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        .btn-logout {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: #ffffff;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Selection Controls Grid */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-control-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: '\f107';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+            transition: transform 0.2s;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--input-radius);
+            outline: none;
+            transition: all 0.25s ease;
+            appearance: none;
+        }
+
+        select:focus, input[type="number"]:focus {
+            background-color: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        }
+
+        /* Marks Section Container */
+        .marks-section {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .marks-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #cbd5e1;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .marks-section-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .limit-pill {
+            background: #eff6ff;
+            color: var(--secondary);
+            border: 1px solid #bae6fd;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Dynamic Subject Grid */
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .subject-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--input-radius);
+            padding: 16px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-2px);
+            border-color: #c7d2fe;
+        }
+
+        .subject-card label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #475569;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .input-with-max {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-with-max input {
+            padding-right: 60px;
+        }
+
+        .max-tag {
+            position: absolute;
+            right: 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        /* Action Buttons & Footer */
+        .action-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .info-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: var(--input-radius);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--shadow-glow);
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-left: 5px solid var(--success); }
+        .toast.error { border-left: 5px solid var(--danger); }
+
+        /* Responsive Layout Improvements */
+        @media (max-width: 640px) {
+            .app-container, .login-container {
+                padding: 25px 20px;
+            }
+            .header-title h1 {
+                font-size: 20px;
+            }
+            .btn-submit {
+                width: 100%;
+                justify-content: center;
+            }
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN CONTAINER -->
+    <div class="login-container" id="login-screen">
+        <div class="login-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-user-lock"></i>
+            </div>
+            <h2>Admin Login</h2>
+            <p>Please enter your credentials to access the Marks Entry Portal</p>
+        </div>
+
+        <form class="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">User ID</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user input-icon"></i>
+                    <input type="text" id="username" placeholder="Enter User ID" required autocomplete="off">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-key input-icon"></i>
+                    <input type="password" id="password" placeholder="Enter Password" required>
+                    <i class="fa-solid fa-eye toggle-pwd" id="toggle-password" onclick="togglePasswordVisibility()"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">
+                <i class="fa-solid fa-right-to-bracket"></i> Login Portal
+            </button>
+        </form>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-container" id="app-screen">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-title">
+                <div class="icon-box">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1>Marks Entry Portal</h1>
+                    <p>KRSU Academic Management System</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="class-badge">
+                    <span class="pulse"></span>
+                    <span>Active Class: Nursery</span>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()" title="Logout">
+                    <i class="fa-solid fa-power-off"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Controls -->
+        <div class="controls-grid">
+            <div class="form-control-group">
+                <label for="marks-class-select"><i class="fa-solid fa-layer-group"></i> Class</label>
+                <div class="select-wrapper">
+                    <select id="marks-class-select" onchange="onClassChange()">
+                        <option value="Nursery">Nursery</option>
+                        <option value="LKG">LKG</option>
+                        <option value="UKG">UKG</option>
+                        <option value="Std-1">Std-1</option>
+                        <option value="Std-2">Std-2</option>
+                        <option value="Std-3">Std-3</option>
+                        <option value="Std-4">Std-4</option>
+                        <option value="Std-5">Std-5</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-control-group">
+                <label for="marks-exam-type"><i class="fa-solid fa-clipboard-list"></i> Examination</label>
+                <div class="select-wrapper">
+                    <select id="marks-exam-type" onchange="onStudentOrExamChange()">
+                        <option value="Unit Test - 1">Unit Test - 1</option>
+                        <option value="Unit Test - 2">Unit Test - 2</option>
+                        <option value="Unit Test - 3">Unit Test - 3</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-control-group">
+                <label for="marks-student-select"><i class="fa-solid fa-user-graduate"></i> Select Student</label>
+                <div class="select-wrapper">
+                    <select id="marks-student-select" onchange="onStudentOrExamChange()">
+                        <option value="">Loading students...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Subject Fields Section -->
+        <div class="marks-section">
+            <div class="marks-section-header">
+                <h2><i class="fa-solid fa-pen-fancy" style="color: var(--primary);"></i> Subject Marks Entry</h2>
+                <div class="limit-pill" id="marks-limit-info">
+                    <i class="fa-solid fa-circle-info"></i> Max Limit: 20 per subject
+                </div>
+            </div>
+            <div id="dynamic-subject-fields" class="subject-grid">
+                <!-- Subject fields dynamically rendered here -->
+            </div>
+        </div>
+
+        <!-- Action Footer -->
+        <footer class="action-footer">
+            <div class="info-note">
+                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--secondary);"></i>
+                <span>Live synchronization with Realtime Database enabled</span>
+            </div>
+            <button class="btn-submit" onclick="saveMarksEntry()">
+                <i class="fa-solid fa-floppy-disk"></i> Save & Sync Marks
+            </button>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">
+        <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+        <span id="toast-message">Action completed successfully!</span>
+    </div>
+
+    <script>
+        // HARDCODED CREDENTIALS
+        const AUTH_USER = "Liton 2026";
+        const AUTH_PASS = "1986";
+
+        // AUTHENTICATION LOGIC
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAuthStatus();
+        });
+
+        function checkAuthStatus() {
+            const isAuthenticated = sessionStorage.getItem('portal_authenticated') === 'true';
+            const loginScreen = document.getElementById('login-screen');
+            const appScreen = document.getElementById('app-screen');
+
+            if (isAuthenticated) {
+                loginScreen.style.display = 'none';
+                appScreen.style.display = 'block';
+                initFirebaseSync();
+            } else {
+                loginScreen.style.display = 'block';
+                appScreen.style.display = 'none';
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const userInp = document.getElementById('username').value.trim();
+            const passInp = document.getElementById('password').value;
+
+            if (userInp === AUTH_USER && passInp === AUTH_PASS) {
+                sessionStorage.setItem('portal_authenticated', 'true');
+                showToast("Login Successful!", "success");
+                setTimeout(() => {
+                    checkAuthStatus();
+                }, 600);
+            } else {
+                showToast("Invalid User ID or Password!", "error");
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('portal_authenticated');
+            showToast("Logged out successfully!", "success");
+            setTimeout(() => {
+                location.reload();
+            }, 600);
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggle-password');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // 1. FIREBASE INITIALIZATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzJ4axa9wV9lwy0fy1xn8wAqWsuqbJ93E",
+            authDomain: "school-management-74254.firebaseapp.com",
+            databaseURL: "https://school-management-74254-default-rtdb.firebaseio.com",
+            projectId: "school-management-74254",
+            storageBucket: "school-management-74254.firebasestorage.app",
+            messagingSenderId: "991469098027",
+            appId: "1:991469098027:web:e5a7386712eee671e8c66e"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        function initFirebaseSync() {
+            db.ref('students').on('value', (snapshot) => {
+                const data = snapshot.val() || [];
+                localStorage.setItem('school_students', JSON.stringify(data));
+                onClassChange();
+            });
+
+            db.ref('marks').on('value', (snapshot) => {
+                const data = snapshot.val() || [];
+                localStorage.setItem('school_marks', JSON.stringify(data));
+                onStudentOrExamChange();
+            });
+        }
+
+        function getStudents() { 
+            return JSON.parse(localStorage.getItem('school_students') || "[]"); 
+        }
+        
+        function getMarksRecords() { 
+            return JSON.parse(localStorage.getItem('school_marks') || "[]"); 
+        }
+
+        // 2. HELPER LOGIC FOR SUBJECTS & LIMITS
+        function getClassSubjects(className, examType) {
+            let baseSubjects = [];
+            if (['Nursery', 'LKG', 'UKG'].includes(className)) {
+                baseSubjects = ['BENGALI', 'ENGLISH', 'MATHEMATICS', 'GK', 'MANISHI KATHAN', 'DRAWING'];
+            } else if (className === 'Std-1') {
+                baseSubjects = ['BENGALI', 'ENGLISH', 'MATHEMATICS', 'GK', 'MANISHI KATHAN', 'DRAWING', 'HINDI'];
+            } else if (['Std-2', 'Std-3', 'Std-4', 'Std-5'].includes(className)) {
+                baseSubjects = ['BENGALI', 'ENGLISH', 'MATHEMATICS', 'GK', 'MANISHI KATHAN', 'DRAWING', 'HINDI', 'SCIENCE', 'HISTORY', 'GEOGRAPHY'];
+            } else {
+                baseSubjects = ['BENGALI', 'ENGLISH', 'MATHEMATICS', 'GK', 'MANISHI KATHAN', 'DRAWING'];
+            }
+
+            if (examType === 'Unit Test - 3') baseSubjects.push('PT + WE');
+            return baseSubjects;
+        }
+
+        function getMaxMarksForSubject(subject, examType) {
+            if (subject === 'PT + WE') return 100;
+            if (examType === 'Unit Test - 1') return 20;
+            if (examType === 'Unit Test - 2') return 30;
+            if (examType === 'Unit Test - 3') return 50;
+            return 100;
+        }
+
+        function validateMarksInput(input, max) {
+            let val = parseFloat(input.value);
+            if (val > max) {
+                showToast(`Maximum allowed mark for this subject is ${max}`, "error");
+                input.value = max;
+            } else if (val < 0) {
+                input.value = 0;
+            }
+        }
+
+        function getSavedMarks(studentId, examType) {
+            let records = getMarksRecords();
+            let rec = records.find(r => r.studentId === studentId && r.examType === examType);
+            return rec ? rec.marks || {} : {};
+        }
+
+        // 3. UI RENDERING AND EVENTS
+        function onClassChange() {
+            let classSel = document.getElementById('marks-class-select');
+            if (!classSel) return;
+            let selectedClass = classSel.value;
+            let select = document.getElementById('marks-student-select');
+            if (!select) return;
+            select.innerHTML = '';
+
+            let students = getStudents().filter(s => s.studentClass === selectedClass);
+
+            if (students.length === 0) {
+                select.innerHTML = '<option value="">No Students Found</option>';
+            } else {
+                students.forEach(s => {
+                    let opt = document.createElement('option');
+                    opt.value = s.studentId;
+                    opt.innerText = `${s.name} (Roll: ${s.rollNo || '-'}, ID: ${s.studentId})`;
+                    select.appendChild(opt);
+                });
+            }
+
+            onStudentOrExamChange();
+        }
+
+        function onStudentOrExamChange() {
+            let stuSel = document.getElementById('marks-student-select');
+            let exSel = document.getElementById('marks-exam-type');
+            let classSel = document.getElementById('marks-class-select');
+
+            if (!stuSel || !exSel || !classSel) return;
+
+            let studentId = stuSel.value;
+            let examType = exSel.value;
+            let currentClass = classSel.value;
+
+            let badge = document.getElementById('class-badge');
+            if (badge) badge.querySelector('span:last-child').innerText = `Active Class: ${currentClass}`;
+
+            let limitInfo = document.getElementById('marks-limit-info');
+            if (limitInfo) {
+                let maxVal = 20;
+                if (examType === 'Unit Test - 2') maxVal = 30;
+                else if (examType === 'Unit Test - 3') maxVal = '50 (PT+WE: 100)';
+                limitInfo.innerHTML = `<i class="fa-solid fa-circle-info"></i> Max Limit: ${maxVal}`;
+            }
+
+            let subjects = getClassSubjects(currentClass, examType);
+            let savedMarks = getSavedMarks(studentId, examType);
+
+            let container = document.getElementById('dynamic-subject-fields');
+            if (container) {
+                container.innerHTML = '';
+                subjects.forEach(sub => {
+                    let max = getMaxMarksForSubject(sub, examType);
+                    let val = savedMarks[sub] !== undefined ? savedMarks[sub] : '';
+
+                    let div = document.createElement('div');
+                    div.className = 'subject-card';
+                    div.innerHTML = `
+                        <label for="sub_mark_${sub}">${sub}</label>
+                        <div class="input-with-max">
+                            <input type="number" id="sub_mark_${sub}" value="${val}" min="0" max="${max}" placeholder="0" oninput="validateMarksInput(this, ${max})">
+                            <span class="max-tag">/ ${max}</span>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        // 4. DATA SAVING & REALTIME FIREBASE UPDATE
+        function saveMarksEntry() {
+            let stuSel = document.getElementById('marks-student-select');
+            let exSel = document.getElementById('marks-exam-type');
+            let classSel = document.getElementById('marks-class-select');
+
+            if (!stuSel || !stuSel.value) { 
+                showToast("Please select a student first!", "error"); 
+                return; 
+            }
+
+            let studentId = stuSel.value;
+            let examType = exSel.value;
+            let currentClass = classSel.value;
+            let subjects = getClassSubjects(currentClass, examType);
+
+            let marks = {};
+            subjects.forEach(sub => {
+                let el = document.getElementById(`sub_mark_${sub}`);
+                if (el) marks[sub] = parseFloat(el.value) || 0;
+            });
+
+            let records = getMarksRecords();
+            let idx = records.findIndex(r => r.studentId === studentId && r.examType === examType);
+            let newRecord = { studentId, examType, class: currentClass, marks };
+
+            if (idx !== -1) records[idx] = newRecord;
+            else records.push(newRecord);
+
+            // Sync with Firebase Database Node 'marks'
+            db.ref('marks').set(records).then(() => {
+                showToast("Marks updated & synchronized successfully!", "success");
+                onStudentOrExamChange();
+            }).catch((err) => {
+                showToast("Failed to save marks: " + err.message, "error");
+            });
+        }
+
+        // Custom Notification Toast Function
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = message;
+            toast.className = `toast ${type} show`;
+
+            if (type === "success") {
+                toastIcon.className = "fa-solid fa-circle-check";
+                toastIcon.style.color = "var(--success)";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-exclamation";
+                toastIcon.style.color = "var(--danger)";
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
